@@ -8,6 +8,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import QRCode from "qrcode";
 
+// Constants
+const MAX_TEXT_DISPLAY_LENGTH = 50;
+
 const server = new Server(
   {
     name: "qrcode-server",
@@ -75,15 +78,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         margin: 2,
       });
 
+      // Extract base64 data from data URL
+      const base64Match = qrCodeDataUrl.match(/^data:image\/png;base64,(.+)$/);
+      if (!base64Match || !base64Match[1]) {
+        throw new Error("Failed to extract base64 data from QR code");
+      }
+
       return {
         content: [
           {
             type: "text",
-            text: `QR code generated successfully for: "${text.substring(0, 50)}${text.length > 50 ? "..." : ""}"`,
+            text: `QR code generated successfully for: "${text.substring(0, MAX_TEXT_DISPLAY_LENGTH)}${text.length > MAX_TEXT_DISPLAY_LENGTH ? "..." : ""}"`,
           },
           {
             type: "image",
-            data: qrCodeDataUrl.split(",")[1], // Remove data:image/png;base64, prefix
+            data: base64Match[1],
             mimeType: "image/png",
           },
         ],
